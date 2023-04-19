@@ -1,5 +1,6 @@
 package com.example.citypop
 
+import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -9,13 +10,23 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import android.util.Log
+import java.io.FileInputStream
+import java.util.Properties
 
 
-class SpotifyViewModel : ViewModel() {
+class SpotifyViewModel(private val context: Context) : ViewModel() {
     private val spotifyService = SpotifyService.create()
     private val spotifyRepository = SpotifyRepository(spotifyService)
-    private val clientId = "f1fad2b8d40847e794eedea14e88bf44"
-    private val clientSecret = "e1332a6935064f6ab54fa67e50a751e2"
+
+    private val clientId: String
+    private val clientSecret: String
+    init {
+        val properties = Properties().apply {
+            context.assets.open("secrets.properties").use { inputStream -> load(inputStream) }
+        }
+        clientId = properties.getProperty("spotifyClientId")
+        clientSecret = properties.getProperty("spotifyClientSecret")
+    }
 
     var albumDetails by mutableStateOf<AlbumDetails?>(null)
 

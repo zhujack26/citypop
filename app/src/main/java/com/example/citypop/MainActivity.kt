@@ -38,7 +38,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme {
-                val viewModel = SpotifyViewModel()
+                val viewModel = SpotifyViewModel(applicationContext)
                 MusicApp(viewModel)
             }
         }
