@@ -1,0 +1,51 @@
+package com.example.citypop
+
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import android.util.Log
+
+
+class SpotifyViewModel : ViewModel() {
+    private val spotifyService = SpotifyService.create()
+    private val spotifyRepository = SpotifyRepository(spotifyService)
+    private val clientId = "f1fad2b8d40847e794eedea14e88bf44"
+    private val clientSecret = "e1332a6935064f6ab54fa67e50a751e2"
+
+    var albumDetails by mutableStateOf<AlbumDetails?>(null)
+
+    fun getAlbumDetails(albumId: String) {
+        //코루틴 실행
+        viewModelScope.launch {
+            val accessToken = getAccessToken()
+            withContext(Dispatchers.IO) {
+                //액세스 토큰은 withContext 블록 안에서 얻기
+                //withContext 블록은 코루틴 스케줄러를 전환, 다른 스레드에서 코드를 실행할 수 있는 기능 제공
+                // Dispatchers.IO 스케줄러를 사용하여 I/O 작업을 수행하는 별도의 스레드에서 코드를 실행
+                spotifyRepository.getAlbumDetails(albumId, accessToken) { details ->
+                    this@SpotifyViewModel.albumDetails = details
+                }
+            }
+        }
+    }
+    private suspend fun getAccessToken(): String {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = spotifyService.getAccessToken(
+                    grantType = "client_credentials",
+                    clientId = clientId,
+                    clientSecret = clientSecret
+                )
+                response.accessToken.also { Log.d("SpotifyViewModel", "Access Token: $it") }
+            } catch (e: Exception) {
+                Log.e("SpotifyViewModel", "Failed to get access token: $e")
+                throw e
+            }
+        }
+    }
+}
